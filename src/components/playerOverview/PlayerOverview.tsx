@@ -1,16 +1,17 @@
 import { Box, Checkbox, Flex, Input, Tooltip } from "@chakra-ui/react";
-import React from "react";
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { matchesToPlayersHelper } from "../../logic/dictionaryUtils";
+import { useTableFilters } from "../../logic/hooks/tableHooks";
+import { MatchHistoryService } from "../../services/MatchHistoryService";
+import { Match } from "../../types/domain/Match";
+import { Player } from "../../types/domain/Player";
+import { Error } from "../Error";
+import { Loading } from "../Loading";
+import { DatePicker } from "../common/DatePicker";
+import { PLAYER_MINIMUM_GAMES_REQUIRED } from "../constants";
 import { SortableTable } from "../dataVisualizations/SortableTable";
 import { playerOverviewColumns } from "../dataVisualizations/columnHelpers/playerOverviewColumnHelper";
-import { StatsSelectors } from "../../redux/stats/statsSelectors";
-import { useSelector } from "react-redux";
-import { Loading } from "../Loading";
-import { Player } from "../../types/domain/Player";
-import { useNavigate } from "react-router-dom";
-import { PLAYER_MINIMUM_GAMES_REQUIRED } from "../constants";
-import { AppState } from "../../redux/rootReducer";
-import { DatePicker } from "../common/DatePicker";
-import { useTableFilters } from "../../logic/hooks/tableHooks";
 
 /**
  * Component showing all the players in a big list
@@ -21,24 +22,21 @@ export const PlayerOverview = React.memo(function MatchHistory() {
     const { dateFilter, showOnlyQualfied, searchInput, onDatePickerChange, onShowOnlyQualifiedChange, onSearchChange } =
         useTableFilters();
 
-    const allPlayers: { [id: string]: Player } | undefined = useSelector(StatsSelectors.getPlayers);
-    const players: Player[] = useSelector((state: AppState) => StatsSelectors.getPlayersByDate(state, dateFilter));
+    const selectPlayersByDate = useCallback(
+        (matches: Match[]) => Object.values(matchesToPlayersHelper(matches, undefined, dateFilter)),
+        []
+    );
+    const {data, isPending, isError} = MatchHistoryService.useMatchHistory(selectPlayersByDate);
 
-    if (allPlayers === undefined) {
-        return <Loading text="Loading..." />;
+    const filterPlayers = (players: Player[]) => {
+        return players?.filter(p => showOnlyQualfied ? p.validMatchesCount >= PLAYER_MINIMUM_GAMES_REQUIRED : true)
+            .filter(p => searchInput ? p.name.toLowerCase().includes(searchInput.toLowerCase()) : true)
     }
-
-    let playersArray = players.sort((a: Player, b: Player) => a.name.localeCompare(b.name));
-    if (showOnlyQualfied) {
-        playersArray = playersArray.filter(
-            (value: Player) => allPlayers[value.name].validMatchesCount >= PLAYER_MINIMUM_GAMES_REQUIRED
-        );
-    }
-
-    if (searchInput.length > 0 && allPlayers) {
-        playersArray = playersArray.filter((value: Player) =>
-            allPlayers[value.name].name.toLowerCase().includes(searchInput.toLowerCase())
-        );
+    
+    if (isPending) {
+        return <Loading text="" />;
+    } else if (isError) {
+        return <Error error="" />
     }
 
     return (
@@ -68,7 +66,8 @@ export const PlayerOverview = React.memo(function MatchHistory() {
             </Flex>
             <SortableTable
                 columns={playerOverviewColumns}
-                data={playersArray}
+                data={filterPlayers(data)}
+                defaultSort={[{id: 'name', desc: false}]}
                 getRowProps={(row: any) => {
                     return {
                         onClick: () => {

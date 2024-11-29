@@ -1,29 +1,28 @@
 import { Flex } from "@chakra-ui/react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { MatchHistoryService } from "../../services/MatchHistoryService";
+import { Error } from "../Error";
+import { Loading } from "../Loading";
 import { SortableTable } from "../dataVisualizations/SortableTable";
 import { matchHistoryColumns } from "../dataVisualizations/columnHelpers/matchHistoryColumnHelper";
-import { StatsSelectors } from "../../redux/stats/statsSelectors";
-import { useSelector } from "react-redux";
-import { Loading } from "../Loading";
-import { useNavigate } from "react-router-dom";
-import { Match } from "../../types/domain/Match";
 
 export const MatchHistory = React.memo(function MatchHistory() {
     const navigate = useNavigate();
-    let matches = useSelector(StatsSelectors.getMatches);
+    const { data, isPending, isError } = MatchHistoryService.useMatchHistory();
 
-    if (matches === undefined) {
+    if (isPending) {
         return <Loading text="" />;
+    } else if (isError) {
+        return <Error error="" />
     }
-
-    // Cannot directly mutate state, copy to new array first
-    matches = matches.slice().sort((a: Match, b: Match) => Number(b.id) - Number(a.id));
 
     return (
         <Flex direction="column" justify="center" align="center">
             <SortableTable
                 columns={matchHistoryColumns}
-                data={matches}
+                data={data}
+                defaultSort={[{ id: "id", desc: true }]}
                 getRowProps={(row: any) => {
                     return {
                         onClick: () => {

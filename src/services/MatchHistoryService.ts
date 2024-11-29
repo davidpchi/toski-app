@@ -1,10 +1,8 @@
 import axios from "axios";
-import { useDispatch } from "react-redux";
 
+import { useQuery } from "@tanstack/react-query";
 import { Match } from "../types/domain/Match";
 import { sheetRowToMatch } from "../types/service/MatchHistory/dataMappers";
-import { StatsAction } from "../redux/stats/statsActions";
-import { useCallback } from "react";
 import { sendDataToGoogleSheets } from "./GoogleFormsService";
 
 const matchHistoryDataEndpoint =
@@ -12,36 +10,29 @@ const matchHistoryDataEndpoint =
 const matchHistorySubmitEndpoint =
     "https://docs.google.com/forms/d/e/1FAIpQLScguPsS2TOxaABYLtbCDZ5zPXec2av9AI2kPI2JFwYqmghBYQ/formResponse";
 
-const useMatchHistory = () => {
-    // Do the initial data hydration here
-    const dispatch = useDispatch();
-
-    return useCallback(() => {
-        axios.get<string>(matchHistoryDataEndpoint, {}).then((res) => {
+const fetchMatchHistory = async () => {
+    return await axios.get<string>(matchHistoryDataEndpoint, {})
+        .then((res) => {
             // strip out the setResponse text from the data
             let raw: string = res.data;
             const startText = ".setResponse(";
             raw = raw.substring(raw.indexOf(startText) + startText.length);
             raw = raw.substring(0, raw.length - 2);
             const resultObj = JSON.parse(raw);
-            const matches = mapObjectoMatches(resultObj);
-
-            if (matches !== undefined) {
-                dispatch(StatsAction.HydrateMatchHistoryComplete(matches));
-            } else {
-                console.log("mapping resultObj to matches failed.");
-            }
-        });
-    }, [dispatch]);
+            return mapObjectToMatches(resultObj);
+        })
 };
 
-function mapObjectoMatches(resultObj: any): Match[] | undefined {
-    const matches: Match[] = [];
+const useMatchHistory = <TData = Match[]>(select?: (data: Match[]) => TData) => {
+    return useQuery({
+        queryKey: ['matches'],
+        queryFn: fetchMatchHistory,
+        select: select,
+    })
+};
 
-    if (resultObj.table === undefined || resultObj.table.rows === undefined) {
-        console.log("Error parsing JSON object from data: resultObj.table or resultObj.table.rows is undefined.");
-        return undefined;
-    }
+function mapObjectToMatches(resultObj: any): Match[] {
+    const matches: Match[] = [];
 
     for (let i = 0; i < resultObj.table.rows.length; i++) {
         const cell = resultObj.table.rows[i];
@@ -50,7 +41,7 @@ function mapObjectoMatches(resultObj: any): Match[] | undefined {
     }
 
     return matches;
-}
+};
 
 export type MatchSubmissionPlayer = {
     name: string;

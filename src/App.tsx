@@ -5,6 +5,7 @@ import { router } from "./navigation/routes";
 import { Provider } from "react-redux";
 import { createStore } from "@reduxjs/toolkit";
 import { rootReducer } from "./redux/rootReducer";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ export default function App() {
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
+                <ReactQueryDevtools buttonPosition={"bottom-left"} />
             </QueryClientProvider>
         </Provider>
     );

@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 
 import "./Root.css";
 import AppFrame from "../components/navigation/AppFrame";
-import { MatchHistoryService } from "../services/MatchHistoryService";
 import { DiscordService } from "../services/DiscordService";
 import { ProfileService } from "../services/ProfileService";
 import { useAuthInfo } from "../logic/hooks/authHooks";
@@ -11,14 +10,10 @@ import { useAuthInfo } from "../logic/hooks/authHooks";
 export default function Root() {
     const hydrateProfiles = ProfileService.useHydrateProfiles();
     const getCurrentUserInfo = DiscordService.useGetCurrentUserInfo();
-    const getMatchHistory = MatchHistoryService.useMatchHistory();
 
     const { accessToken, tokenType } = useAuthInfo();
 
     useEffect(() => {
-        // kick off the initial data hydration
-        getMatchHistory();
-
         // make the initial call to hydrate profiles
         hydrateProfiles();
 

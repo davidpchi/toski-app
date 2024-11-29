@@ -73,7 +73,7 @@ export function matchesToCommanderHelper(
         for (const player of currentMatch.players) {
             // apply our filters
             if (playerNameFilter !== undefined && player.name !== playerNameFilter) {
-                // we have an active playerName filter-- if the player name is not a match, then we skip it
+                // we have an active playerName filter -- if the player name is not a match, then we skip it
                 continue;
             }
 
