@@ -24,6 +24,8 @@ export const MatchLengthBarChart = React.memo(function MatchHistory({ matches }:
         return { x: Number(numberOfTurns), y: matchesLengthDictionary[numberOfTurns] };
     });
 
+    const matchLengthsMaxY = Math.max(...matchesWithLengthsData.map(height => height.y)); // Finds the tallest column
+
     const tooltipTitleCallback = (item: TooltipItem<"bar">[]) => {
         return `Games with ${matchesWithLengthsData[item[0].dataIndex].x} turns: ${
             matchesWithLengthsData[item[0].dataIndex].y
@@ -41,7 +43,7 @@ export const MatchLengthBarChart = React.memo(function MatchHistory({ matches }:
                 data={matchesWithLengthsData}
                 tooltipTitleCallback={tooltipTitleCallback}
                 tooltipLabelCallback={tooltipLabelCallback}
-                maxY={50}
+                maxY={matchLengthsMaxY + 5}
             />
         </>
     );

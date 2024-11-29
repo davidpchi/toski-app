@@ -42,6 +42,8 @@ export const MatchPlacementBarChart = React.memo(function MatchPlacementBarChart
     const matchPlacementData = Object.keys(matchPlacementDictionary).map((rank: string) => {
         return { x: Number(rank), y: matchPlacementDictionary[rank] };
     });
+    
+    const matchPlacementMaxY = Math.max(...matchPlacementData.map(height => height.y)); // Finds the tallest column
 
     const tooltipTitleCallback = (item: TooltipItem<"bar">[]) => {
         return `Games placed in rank ${matchPlacementData[item[0].dataIndex].x}: ${
@@ -60,7 +62,7 @@ export const MatchPlacementBarChart = React.memo(function MatchPlacementBarChart
                 data={matchPlacementData}
                 tooltipTitleCallback={tooltipTitleCallback}
                 tooltipLabelCallback={tooltipLabelCallback}
-                maxY={validMatches.length}
+                maxY={matchPlacementMaxY + 5}
             />
         </Flex>
     );
